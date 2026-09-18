@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+        }
+
+        .payment-box {
+            max-width: 450px;
+            margin: 70px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 18px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1d428a;
+        }
+
+        .test {
+            text-align: center;
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .details {
+            font-size: 17px;
+            line-height: 1.8;
+        }
+
+        .amount {
+            font-size: 28px;
+            font-weight: bold;
+            color: green;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 9px;
+            background: #2563eb;
+            color: white;
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .back {
+            margin-top: 10px;
+            background: #555;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="payment-box">
+
+    <h1>💳 Payment</h1>
+
+    <div class="test">
+        🧪 TEST PAYMENT MODE
+    </div>
+
+    <div class="details">
+        <p>
+            <strong>Order ID:</strong>
+            <span id="orderId">Loading...</span>
+        </p>
+    </div>
+
+    <div class="amount">
+        ₹<span id="amount">0.00</span>
+    </div>
+
+    <button onclick="makePayment()">
+        ✅ Pay Now
+    </button>
+
+    <button
+        class="back"
+        onclick="window.location.href='customer-orders.html'">
+        ← Back to Orders
+    </button>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+    "https://djiqsudsnlxnzxqtsbar.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+// Get order ID
+const params =
+    new URLSearchParams(window.location.search);
+
+const orderId =
+    params.get("order_id");
+
+
+// Load order
+async function loadOrder() {
+
+    if (!orderId) {
+
+        document.getElementById("orderId").textContent =
+            "Not found";
+
+        return;
+    }
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("orders")
+            .select("*")
+            .eq("id", orderId)
+            .single();
+
+
+    if (error) {
+
+        console.error(error);
+
+        alert("Order loading failed");
+
+        return;
+    }
+
+
+    document.getElementById("orderId").textContent =
+        "#" + data.id;
+
+    document.getElementById("amount").textContent =
+        Number(data.total_amount).toFixed(2);
+}
+
+
+// Test payment
+async function makePayment() {
+
+    if (!orderId) {
+        alert("❌ Order not found");
+        return;
+    }
+
+    // Get order
+    const { data: order, error: orderError } =
+        await supabaseClient
+            .from("orders")
+            .select("total_amount")
+            .eq("id", orderId)
+            .single();
+
+    if (orderError) {
+        alert("❌ Order error:\n" + orderError.message);
+        return;
+    }
+
+
+    // Get order items
+    const { data: orderItems, error: itemsError } =
+        await supabaseClient
+            .from("order_items")
+            .select("product_id, quantity")
+            .eq("order_id", orderId);
+
+    if (itemsError) {
+        alert("❌ Order items error:\n" + itemsError.message);
+        return;
+    }
+
+
+    // Create test payment
+    const paymentId =
+        "TEST_" + Date.now();
+
+
+    const { error: paymentError } =
+        await supabaseClient
+            .from("payments")
+            .insert({
+                order_id: orderId,
+                payment_id: paymentId,
+                amount: order.total_amount,
+                payment_method: "Test Payment",
+                payment_status: "Paid"
+            });
+
+
+    if (paymentError) {
+        alert(
+            "❌ Payment failed:\n" +
+            paymentError.message
+        );
+        return;
+    }
+
+
+    // Reduce product stock
+    for (const item of orderItems) {
+
+        const { data: product, error: productError } =
+            await supabaseClient
+                .from("products")
+                .select("stock")
+                .eq("id", item.product_id)
+                .single();
+
+
+        if (productError) {
+            console.error(productError);
+            continue;
+        }
+
+
+        const newStock =
+            Math.max(
+                0,
+                Number(product.stock) - Number(item.quantity)
+            );
+
+
+        const { error: stockError } =
+            await supabaseClient
+                .from("products")
+                .update({
+                    stock: newStock
+                })
+                .eq("id", item.product_id);
+
+
+        if (stockError) {
+            console.error(
+                "Stock update error:",
+                stockError
+            );
+        }
+    }
+
+
+    alert(
+        "✅ Test Payment Successful!\n\n" +
+        "Payment ID: " + paymentId
+    );
+
+
+    window.location.href =
+        "customer-orders.html";
+}
+
+
+loadOrder();
+
+</script>
+
+</body>
+</html>

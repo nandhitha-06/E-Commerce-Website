@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Seller Dashboard</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="dashboard">
+
+        <header class="dashboard-header">
+            <div>
+                <h1>🛍️ Seller Dashboard</h1>
+                <p>Manage your products and orders</p>
+            </div>
+
+            <button onclick="logout()" class="logout-btn">
+                Logout
+            </button>
+        </header>
+
+
+        <div class="dashboard-cards">
+
+            <!-- Add Product -->
+            <div class="dashboard-card">
+                <h2>➕</h2>
+                <h3>Add Product</h3>
+                <p>Add new products to your store.</p>
+
+                <button onclick="addProduct()">
+                    Add Product
+                </button>
+            </div>
+
+
+            <!-- Manage Products -->
+            <div class="dashboard-card">
+                <h2>📦</h2>
+                <h3>Manage Products</h3>
+                <p>Edit, delete and manage stock.</p>
+
+                <button onclick="manageProducts()">
+                    Manage Products
+                </button>
+            </div>
+
+
+            <!-- Orders -->
+            <div class="dashboard-card">
+                <h2>🛒</h2>
+                <h3>Orders</h3>
+                <p>View customer orders and status.</p>
+
+                <button onclick="viewOrders()">
+                    View Orders
+                </button>
+            </div>
+
+
+            <!-- Payments -->
+            <div class="dashboard-card">
+                <h2>💳</h2>
+                <h3>Payments</h3>
+                <p>Check payment status.</p>
+
+                <button onclick="viewPayments()">
+                    Payment Status
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+    <script>
+
+        // =====================================
+        // SUPABASE CONNECTION
+        // =====================================
+
+        const SUPABASE_URL =
+            "https://djiqsudsnlxnzxqtsbar.supabase.co";
+
+        const SUPABASE_KEY =
+            "sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
+
+        const supabaseClient = supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+
+
+        // =====================================
+        // CHECK LOGIN SESSION
+        // =====================================
+
+        async function checkSession() {
+
+            const {
+                data: { user },
+                error
+            } = await supabaseClient.auth.getUser();
+
+            if (error || !user) {
+
+                window.location.href = "seller-login.html";
+
+                return;
+            }
+
+            console.log("Logged in seller:", user.id);
+        }
+
+
+        checkSession();
+
+
+        // =====================================
+        // ADD PRODUCT
+        // =====================================
+
+        function addProduct() {
+
+            window.location.href = "add-product.html";
+
+        }
+
+
+        // =====================================
+        // MANAGE PRODUCTS
+        // =====================================
+
+        function manageProducts() {
+
+            window.location.href = "manage-products.html";
+
+        }
+
+
+        // =====================================
+        // ORDERS
+        // =====================================
+
+        function viewOrders() {
+            window.location.href = "orders.html";
+
+        }
+
+
+        // =====================================
+        // PAYMENTS
+        // =====================================
+
+        function viewPayments() {
+
+           window.location.href = "payments.html";
+
+        }
+
+
+        // =====================================
+        // LOGOUT
+        // =====================================
+
+        async function logout() {
+
+            const { error } =
+                await supabaseClient.auth.signOut();
+
+            if (error) {
+
+                console.error("Logout error:", error);
+
+                return;
+            }
+
+            window.location.href = "index.html";
+
+        }
+
+    </script>
+
+</body>
+</html>

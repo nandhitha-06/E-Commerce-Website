@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Payments</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #222;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .payment-card {
+            background: white;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .payment-card h2 {
+            margin-top: 0;
+        }
+
+        .payment-info {
+            line-height: 1.8;
+            color: #444;
+        }
+
+        .amount {
+            color: #0a9f45;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: #dff5e5;
+            color: #087a32;
+            font-weight: bold;
+        }
+
+        .back-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            background: #333;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .back-btn:hover {
+            background: #555;
+        }
+
+        #message {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>💳 All Payments</h1>
+    <p class="subtitle">View all payments made by customers</p>
+
+    <button class="back-btn" onclick="goBack()">⬅ Back to Admin Dashboard</button>
+
+    <div id="paymentsContainer">
+        <p id="message">Loading payments...</p>
+    </div>
+
+    <script src="supabase.js"></script>
+
+    <script>
+        async function checkAdmin() {
+
+            const {
+                data: { user },
+                error: userError
+            } = await supabaseClient.auth.getUser();
+
+            if (userError || !user) {
+                alert("Please login as admin.");
+                window.location.href = "admin-login.html";
+                return false;
+            }
+
+            const { data: profiles, error } =
+                await supabaseClient
+                    .from("profiles")
+                    .select("role")
+                    .eq("id", user.id);
+
+            if (error || !profiles || profiles.length === 0) {
+                alert("Admin profile not found.");
+                window.location.href = "admin-login.html";
+                return false;
+            }
+
+            if (profiles[0].role !== "admin") {
+                alert("Access denied.");
+                window.location.href = "admin-login.html";
+                return false;
+            }
+
+            return true;
+        }
+
+
+        async function loadPayments() {
+
+            const isAdmin = await checkAdmin();
+
+            if (!isAdmin) return;
+
+            const { data: payments, error } =
+                await supabaseClient
+                    .from("payments")
+                    .select("*")
+                    .order("id", { ascending: false });
+
+            const container =
+                document.getElementById("paymentsContainer");
+
+            const message =
+                document.getElementById("message");
+
+            if (error) {
+                message.innerHTML =
+                    "❌ Error loading payments: " +
+                    error.message;
+                return;
+            }
+
+            if (!payments || payments.length === 0) {
+                message.innerHTML = "💳 No payments found.";
+                return;
+            }
+
+            message.remove();
+
+            payments.forEach(payment => {
+
+                const card =
+                    document.createElement("div");
+
+                card.className = "payment-card";
+
+                card.innerHTML = `
+                    <h2>💳 Payment #${payment.id}</h2>
+
+                    <div class="payment-info">
+                        🧾 <b>Order ID:</b> ${payment.order_id || "N/A"}<br>
+
+                        🔑 <b>Payment ID:</b>
+                        ${payment.payment_id || "N/A"}<br>
+
+                        💰 <b>Amount:</b>
+                        <span class="amount">
+                            ₹${Number(payment.amount || 0).toFixed(2)}
+                        </span><br>
+
+                        💵 <b>Payment Method:</b>
+                        ${payment.payment_method || "N/A"}<br>
+
+                        📊 <b>Status:</b>
+                        <span class="status">
+                            ${payment.payment_status || "N/A"}
+                        </span>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+
+        function goBack() {
+            window.location.href = "admin-dashboard.html";
+        }
+
+
+        loadPayments();
+    </script>
+
+</body>
+</html>

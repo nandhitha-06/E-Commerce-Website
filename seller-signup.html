@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Seller Sign Up</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="auth-container">
+
+        <h1>👨‍💼 Seller Sign Up</h1>
+
+        <p>Create your seller account</p>
+
+        <form id="sellerSignupForm">
+
+            <input
+    type="text"
+    id="fullName"
+    placeholder="Enter your full name"
+    required
+    pattern="[A-Za-z ]+"
+    title="Name should contain letters and spaces only"
+>
+
+            <input
+                type="email"
+                id="email"
+                placeholder="Email Address"
+                required
+            >
+
+            <input
+                type="password"
+                id="password"
+                placeholder="Password"
+                required
+            >
+
+            <input
+                type="password"
+                id="confirmPassword"
+                placeholder="Confirm Password"
+                required
+            >
+
+            <button type="submit">
+                Create Seller Account
+            </button>
+
+        </form>
+
+        <p id="message"></p>
+
+        <p>
+            Already have an account?
+            <a href="seller-login.html">Login here</a>
+        </p>
+
+        <a href="index.html" class="back-link">
+            ← Back to Home
+        </a>
+
+    </div>
+
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+const nameInput = document.getElementById("fullName");
+
+nameInput.addEventListener("input", function () {
+    this.value = this.value.replace(/[^A-Za-z ]/g, "");
+});
+</script>
+
+    <script>
+
+        const SUPABASE_URL = "https://djiqsudsnlxnzxqtsbar.supabase.co";
+
+        const SUPABASE_KEY = "sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
+
+        const supabaseClient =
+            supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY
+            );
+
+
+        const form =
+            document.getElementById("sellerSignupForm");
+
+        const message =
+            document.getElementById("message");
+
+
+        form.addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+
+
+            const fullName =
+                document.getElementById("fullName").value.trim();
+
+            const email =
+                document.getElementById("email").value.trim();
+
+            const password =
+                document.getElementById("password").value;
+
+            const confirmPassword =
+                document.getElementById("confirmPassword").value;
+
+
+            if (password !== confirmPassword) {
+
+                message.textContent =
+                    "❌ Passwords do not match!";
+
+                return;
+            }
+
+
+            const { data, error } =
+                await supabaseClient.auth.signUp({
+
+                    email: email,
+
+                    password: password
+
+                });
+
+
+            if (error) {
+
+                message.textContent =
+                    "❌ " + error.message;
+
+                return;
+            }
+
+
+            const user = data.user;
+
+
+            if (user) {
+
+                const { error: profileError } =
+                    await supabaseClient
+                        .from("profiles")
+                        .insert({
+
+                            id: user.id,
+
+                            full_name: fullName,
+
+                            role: "seller"
+
+                        });
+
+
+                if (profileError) {
+
+                    message.textContent =
+                        "❌ " + profileError.message;
+
+                    return;
+                }
+
+            }
+
+
+            message.textContent =
+                "✅ Seller account created successfully!";
+
+
+            form.reset();
+
+        });
+
+    </script>
+
+</body>
+
+</html>

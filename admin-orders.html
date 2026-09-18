@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin - Orders</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+        }
+
+        header {
+            background: #111827;
+            color: white;
+            padding: 20px;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        .back-btn {
+            background: #7c3aed;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .order-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .order-card {
+            background: white;
+            padding: 22px;
+            border-radius: 14px;
+
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .order-header h3 {
+            margin: 0;
+        }
+
+        .status {
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .confirmed {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .shipped {
+            background: #ede9fe;
+            color: #6d28d9;
+        }
+
+        .delivered {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .cancelled {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .info {
+            color: #555;
+            margin: 8px 0;
+        }
+
+        .total {
+            font-size: 20px;
+            font-weight: bold;
+            color: #16a34a;
+            margin-top: 15px;
+        }
+
+        .items-title {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .item {
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+        .empty {
+            text-align: center;
+            color: #666;
+            font-size: 18px;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+
+</head>
+
+
+<body>
+
+<header>
+
+    <h1>🛒 Admin Orders</h1>
+
+    <button
+        class="back-btn"
+        onclick="window.location.href='admin-dashboard.html'">
+
+        ← Dashboard
+
+    </button>
+
+</header>
+
+
+<div class="container">
+
+    <div class="title">
+
+        <h2>All Customer Orders</h2>
+
+        <p>
+            View all orders placed by customers
+        </p>
+
+    </div>
+
+
+    <div
+        id="orderList"
+        class="order-list">
+
+        <p class="empty">
+            Loading orders...
+        </p>
+
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+    "https://djiqsudsnlxnzxqtsbar.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
+
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+// =====================================
+// CHECK ADMIN
+// =====================================
+
+async function checkAdmin() {
+
+    const {
+        data: { user },
+        error
+    } =
+        await supabaseClient.auth.getUser();
+
+
+    if (error || !user) {
+
+        window.location.href =
+            "admin-login.html";
+
+        return;
+    }
+
+
+    const {
+        data: profile,
+        error: profileError
+    } =
+        await supabaseClient
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .maybeSingle();
+
+
+    if (
+        profileError ||
+        !profile ||
+        profile.role !== "admin"
+    ) {
+
+        await supabaseClient.auth.signOut();
+
+        window.location.href =
+            "admin-login.html";
+
+        return;
+    }
+
+
+    loadOrders();
+}
+
+
+// =====================================
+// LOAD ORDERS
+// =====================================
+
+async function loadOrders() {
+
+    const {
+        data: orders,
+        error
+    } =
+        await supabaseClient
+            .from("orders")
+            .select("*")
+            .order("created_at", {
+                ascending: false
+            });
+
+
+    const container =
+        document.getElementById("orderList");
+
+
+    if (error) {
+
+        container.innerHTML = `
+            <p class="empty">
+                ❌ Error loading orders:<br>
+                ${error.message}
+            </p>
+        `;
+
+        return;
+    }
+
+
+    if (!orders || orders.length === 0) {
+
+        container.innerHTML = `
+            <p class="empty">
+                🛒 No orders found.
+            </p>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+
+    for (const order of orders) {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "order-card";
+
+
+        const status =
+            String(order.status || "Pending")
+                .toLowerCase();
+
+
+        const statusClass =
+            status.replace(/\s+/g, "-");
+
+
+        const createdDate =
+            order.created_at
+                ? new Date(
+                    order.created_at
+                ).toLocaleString()
+                : "N/A";
+
+
+        // Get order items
+        const {
+            data: items,
+            error: itemsError
+        } =
+            await supabaseClient
+                .from("order_items")
+                .select(`
+                    id,
+                    product_id,
+                    quantity,
+                    price
+                `)
+                .eq("order_id", order.id);
+
+
+        let itemsHTML = "";
+
+
+        if (itemsError) {
+
+            itemsHTML = `
+                <p class="info">
+                    ❌ Could not load order items.
+                </p>
+            `;
+
+        } else if (!items || items.length === 0) {
+
+            itemsHTML = `
+                <p class="info">
+                    No items found.
+                </p>
+            `;
+
+        } else {
+
+            itemsHTML = items.map(item => `
+
+                <div class="item">
+
+                    📦 Product ID:
+                    <strong>${item.product_id}</strong>
+
+                    <br>
+
+                    🔢 Quantity:
+                    <strong>${item.quantity}</strong>
+
+                    <br>
+
+                    💰 Price:
+                    <strong>
+                        ₹${Number(item.price).toFixed(2)}
+                    </strong>
+
+                </div>
+
+            `).join("");
+
+        }
+
+
+        card.innerHTML = `
+
+            <div class="order-header">
+
+                <h3>
+                    📋 Order #${order.id}
+                </h3>
+
+                <span class="status ${statusClass}">
+                    ${order.status || "Pending"}
+                </span>
+
+            </div>
+
+
+            <p class="info">
+                👤 Customer ID:
+                ${order.customer_id}
+            </p>
+
+
+            <p class="info">
+                📅 Order Date:
+                ${createdDate}
+            </p>
+
+
+            <p class="total">
+                💰 Total:
+                ₹${Number(order.total_amount || 0).toFixed(2)}
+            </p>
+
+
+            <h3 class="items-title">
+                📦 Order Items
+            </h3>
+
+
+            ${itemsHTML}
+
+        `;
+
+
+        container.appendChild(card);
+    }
+}
+
+
+// =====================================
+// START
+// =====================================
+
+checkAdmin();
+
+</script>
+
+</body>
+
+</html>

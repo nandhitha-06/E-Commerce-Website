@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Customer Orders</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #1d428a;
+        }
+
+        .back-btn {
+            border: none;
+            background: #555;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #ordersList {
+            display: grid;
+            gap: 20px;
+        }
+
+        .order-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .order-card h3 {
+            margin-top: 0;
+            color: #222;
+        }
+
+        .amount {
+            color: green;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .confirmed {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .shipped {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .delivered {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-buttons {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-buttons button {
+            border: none;
+            padding: 9px 14px;
+            border-radius: 7px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .confirm-btn {
+            background: #2563eb;
+        }
+
+        .shipped-btn {
+            background: #f59e0b;
+        }
+
+        .delivered-btn {
+            background: #16a34a;
+        }
+
+        .status-buttons button:hover {
+            opacity: 0.85;
+        }
+
+        .message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+
+        <h1>🛒 Customer Orders</h1>
+
+        <button class="back-btn" onclick="goBack()">
+            ← Dashboard
+        </button>
+
+    </div>
+
+    <div id="ordersList">
+        <div class="message">
+            Loading orders...
+        </div>
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+    "https://djiqsudsnlxnzxqtsbar.supabase.co";
+
+/*
+    IMPORTANT:
+    Keep your existing WORKING publishable key here.
+    Do NOT use a secret/service-role key.
+*/
+const SUPABASE_KEY =
+    "sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
+
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+// ========================================
+// LOAD ORDERS
+// ========================================
+
+async function loadOrders() {
+
+    const container =
+        document.getElementById("ordersList");
+
+    container.innerHTML = `
+        <div class="message">
+            Loading orders...
+        </div>
+    `;
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("orders")
+            .select("*")
+            .order("created_at", {
+                ascending: false
+            });
+
+
+    if (error) {
+
+        console.error("Load orders error:", error);
+
+        container.innerHTML = `
+            <div class="message">
+                ❌ Error loading orders
+                <br><br>
+                ${error.message}
+            </div>
+        `;
+
+        return;
+    }
+
+
+    if (!data || data.length === 0) {
+
+        container.innerHTML = `
+            <div class="message">
+                🛒 No orders yet.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+
+    data.forEach(order => {
+
+        const card =
+            document.createElement("div");
+
+        card.className = "order-card";
+
+
+        const currentStatus =
+            order.status || "Pending";
+
+
+        let statusClass =
+            "pending";
+
+
+        if (currentStatus === "Confirmed") {
+            statusClass = "confirmed";
+        }
+
+        if (currentStatus === "Shipped") {
+            statusClass = "shipped";
+        }
+
+        if (currentStatus === "Delivered") {
+            statusClass = "delivered";
+        }
+
+
+        card.innerHTML = `
+
+            <h3>
+                📦 Order #${order.id}
+            </h3>
+
+            <p>
+                👤 Customer ID:
+                ${order.customer_id}
+            </p>
+
+            <p class="amount">
+                ₹${Number(order.total_amount).toFixed(2)}
+            </p>
+
+            <p>
+                Status:
+
+                <span class="status ${statusClass}">
+                    ${currentStatus}
+                </span>
+            </p>
+
+            <p>
+                📅
+                ${new Date(order.created_at).toLocaleString()}
+            </p>
+
+
+            <div class="status-buttons">
+
+                <button
+                    class="confirm-btn"
+                    onclick="updateStatus(${order.id}, 'Confirmed')">
+
+                    ✅ Confirm
+
+                </button>
+
+
+                <button
+                    class="shipped-btn"
+                    onclick="updateStatus(${order.id}, 'Shipped')">
+
+                    🚚 Shipped
+
+                </button>
+
+
+                <button
+                    class="delivered-btn"
+                    onclick="updateStatus(${order.id}, 'Delivered')">
+
+                    📦 Delivered
+
+                </button>
+
+            </div>
+
+        `;
+
+
+        container.appendChild(card);
+
+    });
+
+}
+
+
+// ========================================
+// UPDATE ORDER STATUS
+// ========================================
+
+async function updateStatus(id, newStatus) {
+
+    console.log(
+        "Updating order:",
+        id,
+        "New status:",
+        newStatus
+    );
+
+
+    // Update database
+    const { data, error } =
+        await supabaseClient
+            .from("orders")
+            .update({
+                status: newStatus
+            })
+            .eq("id", id)
+            .select();
+
+
+    // Error
+    if (error) {
+
+        console.error(
+            "Status update error:",
+            error
+        );
+
+        alert(
+            "❌ Status update failed:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    // No row updated
+    if (!data || data.length === 0) {
+
+        console.error(
+            "No order was updated."
+        );
+
+        alert(
+            "❌ Status was NOT updated.\n\n" +
+            "Database returned 0 updated rows.\n\n" +
+            "Please check the Orders UPDATE RLS policy."
+        );
+
+        return;
+    }
+
+
+    console.log(
+        "Updated successfully:",
+        data
+    );
+
+
+    alert(
+        "✅ Order status updated to " +
+        newStatus
+    );
+
+
+    // Reload orders
+    await loadOrders();
+
+}
+
+
+// ========================================
+// BACK TO SELLER DASHBOARD
+// ========================================
+
+function goBack() {
+
+    window.location.href =
+        "seller-dashboard.html";
+
+}
+
+
+// ========================================
+// START
+// ========================================
+
+loadOrders();
+
+</script>
+
+</body>
+</html>

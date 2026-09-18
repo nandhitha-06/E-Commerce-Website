@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Profile</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .profile-card {
+            max-width: 500px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .profile-row {
+            padding: 15px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .value {
+            margin-top: 5px;
+            font-size: 17px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            margin-top: 25px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #dc2626;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>👤 My Profile</h1>
+
+<div class="profile-card">
+
+    <div class="profile-row">
+        <div class="label">Full Name</div>
+        <div class="value" id="fullName">Loading...</div>
+    </div>
+
+    <div class="profile-row">
+        <div class="label">Email</div>
+        <div class="value" id="email">Loading...</div>
+    </div>
+
+    <div class="profile-row">
+        <div class="label">Role</div>
+        <div class="value" id="role">Loading...</div>
+    </div>
+
+    <button class="logout-btn" onclick="logout()">
+        🚪 Logout
+    </button>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+    "https://djiqsudsnlxnzxqtsbar.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+// ==============================
+// LOAD PROFILE
+// ==============================
+
+async function loadProfile() {
+
+    const {
+        data: { user },
+        error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+        window.location.href = "customer-login.html";
+        return;
+    }
+
+    document.getElementById("email").textContent =
+        user.email || "Not available";
+
+
+    const { data: profile, error } =
+        await supabaseClient
+            .from("profiles")
+            .select("full_name, role")
+            .eq("id", user.id)
+            .maybeSingle();
+
+
+    if (error) {
+
+        alert("Profile error: " + error.message);
+        return;
+    }
+
+
+    if (profile) {
+
+        document.getElementById("fullName").textContent =
+            profile.full_name || "Not available";
+
+        document.getElementById("role").textContent =
+            profile.role || "Customer";
+
+    } else {
+
+        document.getElementById("fullName").textContent =
+            "Customer";
+
+        document.getElementById("role").textContent =
+            "Customer";
+    }
+}
+
+
+// ==============================
+// LOGOUT
+// ==============================
+
+async function logout() {
+
+    await supabaseClient.auth.signOut();
+
+    window.location.href =
+        "customer-login.html";
+}
+
+
+// ==============================
+
+loadProfile();
+
+</script>
+
+</body>
+</html>

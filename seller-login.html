@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Seller Login</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+    <div class="auth-container">
+
+        <h1>👨‍💼 Seller Login</h1>
+
+        <p>Login to your seller account</p>
+
+
+        <form id="sellerLoginForm">
+
+            <input
+                type="email"
+                id="email"
+                placeholder="Email Address"
+                required
+            >
+
+            <input
+                type="password"
+                id="password"
+                placeholder="Password"
+                required
+            >
+
+            <button type="submit">
+                Login
+            </button>
+
+        </form>
+
+
+        <p id="message"></p>
+
+
+        <p>
+            Don't have an account?
+
+            <a href="seller-signup.html">
+                Sign Up
+            </a>
+        </p>
+
+
+        <a href="index.html" class="back-link">
+            ← Back to Home
+        </a>
+
+    </div>
+
+
+    <!-- Supabase Library -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+    <script>
+const SUPABASE_URL = "https://djiqsudsnlxnzxqtsbar.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
+
+const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+const form = document.getElementById("sellerLoginForm");
+const message = document.getElementById("message");
+
+form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    // ✅ LOGIN
+    const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+    if (error) {
+        message.textContent = "❌ " + error.message;
+        message.style.color = "red";
+        return;
+    }
+
+    message.textContent = "✅ Login successful!";
+    message.style.color = "green";
+
+    // ✅ REDIRECT
+    setTimeout(() => {
+        window.location.href = "seller-dashboard.html";
+    }, 1000);
+});
+</script>
+
+</body>
+
+</html>

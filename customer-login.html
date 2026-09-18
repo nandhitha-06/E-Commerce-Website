@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Login</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .box {
+            background: white;
+            width: 350px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        h2 {
+            text-align: center;
+            color: #1d428a;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #1d428a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        p {
+            text-align: center;
+        }
+
+        a {
+            color: #1d428a;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <h2>🛍️ Customer Login</h2>
+
+    <input
+        type="email"
+        id="email"
+        placeholder="Email"
+    >
+
+    <input
+        type="password"
+        id="password"
+        placeholder="Password"
+    >
+
+    <button onclick="login()">
+        Login
+    </button>
+
+    <p id="message"></p>
+
+    <p>
+        Don't have an account?
+        <a href="customer-signup.html">Sign Up</a>
+    </p>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+"https://djiqsudsnlxnzxqtsbar.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
+
+const supabaseClient =
+supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+
+async function login() {
+
+    const email =
+        document.getElementById("email").value.trim();
+
+    const password =
+        document.getElementById("password").value;
+
+    const message =
+        document.getElementById("message");
+
+
+    if (!email || !password) {
+
+        message.style.color = "red";
+        message.textContent =
+            "Please enter email and password.";
+
+        return;
+    }
+
+
+    const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+
+    if (error) {
+
+        message.style.color = "red";
+        message.textContent = error.message;
+
+        return;
+    }
+
+
+    message.style.color = "green";
+    message.textContent = "Login successful!";
+
+
+    setTimeout(() => {
+
+        window.location.href =
+            "customer-dashboard.html";
+
+    }, 800);
+
+}
+
+</script>
+
+</body>
+</html>

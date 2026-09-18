@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="product-container">
+
+    <div class="product-header">
+        <h1>➕ Add Product</h1>
+        <a href="seller-dashboard.html">← Back to Dashboard</a>
+    </div>
+
+    <form id="productForm">
+
+        <label>Product Name</label>
+        <input
+            type="text"
+            id="productName"
+            placeholder="Enter product name"
+            required
+        >
+
+        <label>Category</label>
+        <select id="category" required>
+            <option value="">Select Category</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Fashion">Fashion</option>
+            <option value="Home">Home</option>
+            <option value="Beauty">Beauty</option>
+            <option value="Books">Books</option>
+            <option value="Other">Other</option>
+        </select>
+
+        <label>Price</label>
+        <input
+            type="number"
+            id="price"
+            placeholder="Enter price"
+            min="1"
+            required
+        >
+
+        <label>Quantity / Stock</label>
+        <input
+            type="number"
+            id="quantity"
+            placeholder="Enter available quantity"
+            min="1"
+            required
+        >
+
+        <label>Description</label>
+        <textarea
+            id="description"
+            placeholder="Enter product description"
+            rows="4"
+            required
+        ></textarea>
+
+        <label>Product Image</label>
+        <input
+            type="file"
+            id="productImage"
+            accept="image/*"
+        >
+
+        <button type="submit">
+            Add Product
+        </button>
+
+        <p id="message"></p>
+
+    </form>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+    const SUPABASE_URL =
+        "https://djiqsudsnlxnzxqtsbar.supabase.co";
+
+    const SUPABASE_ANON_KEY =
+        "sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
+
+    const supabaseClient = supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
+
+
+    document.getElementById("productForm").addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const message = document.getElementById("message");
+
+        message.textContent = "Saving product...";
+
+
+        try {
+
+            // Get current login session
+            const { data: { session } } =
+                await supabaseClient.auth.getSession();
+
+
+            // Check login
+            if (!session || !session.user) {
+
+                message.textContent = "❌ Please login first.";
+
+                console.log("No Supabase session found.");
+
+                return;
+            }
+
+
+            // Logged-in seller
+            const user = session.user;
+
+            console.log("LOGGED IN USER ID:", user.id);
+            console.log("USER EMAIL:", user.email);
+
+
+            // Get form values
+            const productName =
+                document.getElementById("productName").value.trim();
+
+            const category =
+                document.getElementById("category").value;
+
+            const price =
+                document.getElementById("price").value;
+
+            const quantity =
+                document.getElementById("quantity").value;
+
+
+            const descriptionElement =
+                document.getElementById("description");
+
+            const description =
+                descriptionElement
+                    ? descriptionElement.value.trim()
+                    : "";
+
+
+            // Insert product
+            // 📸 Get image file
+const file = document.getElementById("productImage").files[0];
+
+let imageUrl = "";
+
+// 📤 Upload image if selected
+if (file) {
+
+    const fileName = Date.now() + "_" + file.name;
+
+    const { data: uploadData, error: uploadError } =
+        await supabaseClient.storage
+            .from("products")
+            .upload(fileName, file);
+
+    if (uploadError) {
+        message.textContent = "❌ Image upload failed";
+        console.error(uploadError);
+        return;
+    }
+
+    // 🌐 Get public URL
+    const { data: publicUrlData } =
+        supabaseClient.storage
+            .from("products")
+            .getPublicUrl(fileName);
+
+    imageUrl = publicUrlData.publicUrl;
+}
+
+
+// 💾 Insert product
+const { data, error } =
+    await supabaseClient
+        .from("products")
+        .insert([
+            {
+                seller_id: user.id,
+                name: productName,
+                category: category,
+                price: Number(price),
+                quantity: Number(quantity),
+                description: description,
+                image_url: imageUrl
+            }
+        ])
+        .select();
+            // Check database error
+            if (error) {
+
+                console.error("SUPABASE ERROR:", error);
+
+                message.textContent =
+                    "❌ Error: " + error.message;
+
+                return;
+            }
+
+
+            // Success
+            console.log("PRODUCT SAVED:", data);
+
+            message.textContent =
+                "✅ Product added successfully!";
+
+
+            // Clear form
+            document.getElementById("productForm").reset();
+
+
+        } catch (error) {
+
+            console.error("ERROR:", error);
+
+            message.textContent =
+                "❌ Something went wrong: " + error.message;
+
+        }
+
+    });
+</script>
+
+</body>
+</html>

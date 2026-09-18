@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Login</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            min-height: 100vh;
+        }
+
+        .login-box {
+            width: 350px;
+            background: white;
+            padding: 30px;
+
+            border-radius: 15px;
+
+            box-shadow:
+                0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+
+            box-sizing: border-box;
+
+            border: 1px solid #ccc;
+            border-radius: 8px;
+
+            font-size: 16px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #7c3aed;
+        }
+
+        button {
+            width: 100%;
+
+            padding: 12px;
+            margin-top: 25px;
+
+            border: none;
+            border-radius: 8px;
+
+            background: #7c3aed;
+            color: white;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #6d28d9;
+        }
+
+        .back {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back a {
+            color: #7c3aed;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-box">
+
+    <h1>👑 Admin Login</h1>
+
+    <p class="subtitle">
+        Admin Dashboard
+    </p>
+
+    <form onsubmit="adminLogin(event)">
+
+        <label>Email</label>
+
+        <input
+            type="email"
+            id="email"
+            placeholder="Enter admin email"
+            required
+        >
+
+        <label>Password</label>
+
+        <input
+            type="password"
+            id="password"
+            placeholder="Enter password"
+            required
+        >
+
+        <button type="submit">
+            🔐 Login
+        </button>
+
+    </form>
+
+    <div class="back">
+        <a href="index.html">
+            ← Back to Home
+        </a>
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+    "https://djiqsudsnlxnzxqtsbar.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+// =====================================
+// ADMIN LOGIN
+// =====================================
+
+async function adminLogin(event) {
+
+    event.preventDefault();
+
+    const email =
+        document.getElementById("email").value.trim();
+
+    const password =
+        document.getElementById("password").value;
+
+
+    if (!email || !password) {
+        alert("Please enter email and password.");
+        return;
+    }
+
+
+    // LOGIN
+    const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+
+    if (error) {
+
+        alert(
+            "❌ Login failed:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    if (!data.user) {
+
+        alert("❌ User not found.");
+
+        return;
+    }
+
+
+    const user = data.user;
+
+
+    console.log("Logged in user:", user.id);
+
+
+    // GET PROFILE
+    const {
+        data: profiles,
+        error: profileError
+    } =
+        await supabaseClient
+            .from("profiles")
+            .select("id, role")
+            .eq("id", user.id);
+
+
+    console.log("Profile:", profiles);
+    console.log("Profile error:", profileError);
+
+
+    if (profileError) {
+
+        alert(
+            "❌ Profile error:\n\n" +
+            profileError.message
+        );
+
+        await supabaseClient.auth.signOut();
+
+        return;
+    }
+
+
+    // PROFILE NOT FOUND
+    if (!profiles || profiles.length === 0) {
+
+        alert(
+            "❌ Admin profile not found.\n\n" +
+            "We need to create your admin profile."
+        );
+
+        await supabaseClient.auth.signOut();
+
+        return;
+    }
+
+
+    const profile = profiles[0];
+
+
+    // CHECK ADMIN ROLE
+    if (profile.role !== "admin") {
+
+        alert(
+            "❌ This account is not an admin.\n\n" +
+            "Current role: " +
+            profile.role
+        );
+
+        await supabaseClient.auth.signOut();
+
+        return;
+    }
+
+
+    // SUCCESS
+    alert(
+        "✅ Admin login successful! 👑"
+    );
+
+
+    window.location.href =
+        "admin-dashboard.html";
+}
+
+</script>
+
+</body>
+</html>

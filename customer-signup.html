@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Customer Sign Up</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #dbeafe, #eff6ff);
+            margin: 0;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            min-height: 100vh;
+        }
+
+        .signup-box {
+            width: 420px;
+            background: white;
+            padding: 30px;
+            border-radius: 18px;
+
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        h2 {
+            text-align: center;
+            color: #1e3a8a;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-top: 14px;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: #334155;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px;
+
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: #2563eb;
+        }
+
+        textarea {
+            height: 80px;
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            margin-top: 22px;
+
+            background: #2563eb;
+            color: white;
+
+            border: none;
+            border-radius: 8px;
+
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        #message {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 18px;
+            color: #64748b;
+        }
+
+        .login-link a {
+            color: #2563eb;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .home-link {
+            display: block;
+            text-align: center;
+            margin-top: 18px;
+            color: #2563eb;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="signup-box">
+
+    <h2>🛍️ Customer Sign Up</h2>
+
+    <p class="subtitle">
+        Create your customer account
+    </p>
+
+
+    <!-- Full Name -->
+    <label>👤 Full Name</label>
+
+    <input
+        type="text"
+        id="fullName"
+        placeholder="Enter your full name"
+        required
+        oninput="this.value = this.value.replace(/[^A-Za-z ]/g, '')"
+    >
+
+
+    <!-- Email -->
+    <label>📧 Email</label>
+
+    <input
+        type="email"
+        id="email"
+        placeholder="Enter your email"
+        required
+    >
+
+
+    <!-- Phone -->
+    <label>📱 Phone Number</label>
+<input 
+    type="tel"
+    id="phone"
+    placeholder="Enter 10 digit phone number"
+    maxlength="10"
+    inputmode="numeric"
+    pattern="[0-9]{10}"
+    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+    required
+>
+
+
+    <!-- Address -->
+    <label>🏠 Address</label>
+
+    <textarea
+        id="address"
+        placeholder="Enter your address"
+        required
+    ></textarea>
+
+
+    <!-- Password -->
+    <label>🔒 Password</label>
+
+    <input
+        type="password"
+        id="password"
+        placeholder="Enter password"
+        required
+    >
+
+
+    <!-- Confirm Password -->
+    <label>🔒 Confirm Password</label>
+
+    <input
+        type="password"
+        id="confirmPassword"
+        placeholder="Confirm password"
+        required
+    >
+
+
+    <button onclick="signUp()">
+        Create Customer Account
+    </button>
+
+
+    <p id="message"></p>
+
+
+    <div class="login-link">
+
+        Already have an account?
+
+        <a href="customer-login.html">
+            Login here
+        </a>
+
+    </div>
+
+
+    <a href="index.html" class="home-link">
+        ← Back to Home
+    </a>
+
+</div>
+
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<script>
+
+const SUPABASE_URL =
+    "https://djiqsudsnlxnzxqtsbar.supabase.co";
+
+
+const SUPABASE_KEY =
+    "sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
+
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+async function signUp() {
+
+    const fullName =
+        document.getElementById("fullName").value.trim();
+
+    const email =
+        document.getElementById("email").value.trim();
+
+    const phone =
+        document.getElementById("phone").value.trim();
+
+    const address =
+        document.getElementById("address").value.trim();
+
+    const password =
+        document.getElementById("password").value;
+
+    const confirmPassword =
+        document.getElementById("confirmPassword").value;
+
+    const message =
+        document.getElementById("message");
+
+
+    // Clear old message
+    message.textContent = "";
+
+
+    // Name validation
+    const namePattern = /^[A-Za-z ]+$/;
+
+    if (!fullName) {
+
+        message.style.color = "red";
+
+        message.textContent =
+            "Please enter your name.";
+
+        return;
+    }
+
+
+    if (!namePattern.test(fullName)) {
+
+        message.style.color = "red";
+
+        message.textContent =
+            "Name should contain letters and spaces only.";
+
+        return;
+    }
+
+
+    // Check empty fields
+    if (
+        !email ||
+        !phone ||
+        !address ||
+        !password ||
+        !confirmPassword
+    ) {
+
+        message.style.color = "red";
+
+        message.textContent =
+            "Please fill all fields.";
+
+        return;
+    }
+
+
+    // Phone validation
+    const phonePattern = /^[0-9]{10}$/;
+
+    if (!phonePattern.test(phone)) {
+
+        message.style.color = "red";
+
+        message.textContent =
+            "Phone number must contain exactly 10 digits.";
+
+        return;
+    }
+
+
+    // Password validation
+    if (password.length < 6) {
+
+        message.style.color = "red";
+
+        message.textContent =
+            "Password must be at least 6 characters.";
+
+        return;
+    }
+
+
+    // Confirm password
+    if (password !== confirmPassword) {
+
+        message.style.color = "red";
+
+        message.textContent =
+            "Passwords do not match.";
+
+        return;
+    }
+
+
+    // Disable button while processing
+    const button =
+        document.querySelector("button");
+
+    button.disabled = true;
+
+    button.textContent =
+        "Creating Account...";
+
+
+    // Supabase Signup
+    const { data, error } =
+        await supabaseClient.auth.signUp({
+
+            email: email,
+
+            password: password,
+
+            options: {
+
+                data: {
+
+                    full_name: fullName,
+
+                    phone: phone,
+
+                    address: address,
+
+                    role: "customer"
+
+                }
+
+            }
+
+        });
+
+
+    // Signup error
+    if (error) {
+
+        message.style.color = "red";
+
+        message.textContent =
+            error.message;
+
+        button.disabled = false;
+
+        button.textContent =
+            "Create Customer Account";
+
+        return;
+    }
+
+
+    // Create profile
+    if (data.user) {
+
+        const { error: profileError } =
+            await supabaseClient
+                .from("profiles")
+                .insert({
+
+                    id: data.user.id,
+
+                    full_name: fullName,
+
+                    role: "customer"
+
+                });
+
+
+        // Profile error
+        if (profileError) {
+
+            message.style.color = "red";
+
+            message.textContent =
+                profileError.message;
+
+            button.disabled = false;
+
+            button.textContent =
+                "Create Customer Account";
+
+            return;
+        }
+    }
+
+
+    // Success
+    message.style.color = "green";
+
+    message.textContent =
+        "Account created successfully!";
+
+
+    // Go to login
+    setTimeout(() => {
+
+        window.location.href =
+            "customer-login.html";
+
+    }, 1500);
+
+}
+
+</script>
+
+</body>
+</html>

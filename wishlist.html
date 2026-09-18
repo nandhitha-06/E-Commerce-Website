@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Wishlist</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        #wishlist {
+            max-width: 900px;
+            margin: 30px auto;
+        }
+
+        .wishlist-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .wishlist-card img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .price {
+            color: green;
+            font-weight: bold;
+        }
+
+        .remove-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .cart-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>❤️ My Wishlist</h1>
+
+<div id="wishlist">
+    Loading wishlist...
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+    "https://djiqsudsnlxnzxqtsbar.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+let wishlistItems = [];
+
+
+// ==============================
+// LOAD WISHLIST
+// ==============================
+
+async function loadWishlist() {
+
+    const container =
+        document.getElementById("wishlist");
+
+    const {
+        data: { user },
+        error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+        window.location.href = "customer-login.html";
+        return;
+    }
+
+    const { data: wishlistData, error } =
+        await supabaseClient
+            .from("wishlist")
+            .select("id, product_id")
+            .eq("customer_id", user.id);
+
+    if (error) {
+        container.innerHTML =
+            `<p style="color:red;">${error.message}</p>`;
+        return;
+    }
+
+    if (!wishlistData || wishlistData.length === 0) {
+
+        container.innerHTML =
+            "<h3 style='text-align:center;'>Your wishlist is empty ❤️</h3>";
+
+        return;
+    }
+
+    const productIds =
+        wishlistData.map(item => item.product_id);
+
+    const { data: productsData, error: productError } =
+        await supabaseClient
+            .from("products")
+            .select("id, name, price, image_url, stock")
+            .in("id", productIds);
+
+    if (productError) {
+        container.innerHTML =
+            `<p style="color:red;">${productError.message}</p>`;
+        return;
+    }
+
+    wishlistItems = wishlistData.map(item => {
+
+        const product =
+            productsData.find(
+                p => String(p.id) === String(item.product_id)
+            );
+
+        return {
+            ...item,
+            product: product
+        };
+    }).filter(item => item.product);
+
+    displayWishlist();
+}
+
+
+// ==============================
+// DISPLAY
+// ==============================
+
+function displayWishlist() {
+
+    const container =
+        document.getElementById("wishlist");
+
+    container.innerHTML = "";
+
+    wishlistItems.forEach(item => {
+
+        const product = item.product;
+
+        const div =
+            document.createElement("div");
+
+        div.className = "wishlist-card";
+
+        div.innerHTML = `
+
+            <img
+                src="${product.image_url}"
+                alt="${product.name}"
+            >
+
+            <div class="product-info">
+
+                <h2>${product.name}</h2>
+
+                <p class="price">
+                    ₹${product.price}
+                </p>
+
+                <p>
+                    Stock: ${product.stock}
+                </p>
+
+                <button
+                    class="cart-btn"
+                    onclick="addToCart('${product.id}')">
+                    🛒 Add to Cart
+                </button>
+
+                <button
+                    class="remove-btn"
+                    onclick="removeWishlist('${item.id}')">
+                    ❌ Remove
+                </button>
+
+            </div>
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+
+// ==============================
+// REMOVE WISHLIST
+// ==============================
+
+async function removeWishlist(id) {
+
+    const { error } =
+        await supabaseClient
+            .from("wishlist")
+            .delete()
+            .eq("id", id);
+
+    if (error) {
+        alert(error.message);
+        return;
+    }
+
+    loadWishlist();
+}
+
+
+// ==============================
+// ADD TO CART
+// ==============================
+
+async function addToCart(productId) {
+
+    const {
+        data: { user }
+    } = await supabaseClient.auth.getUser();
+
+    if (!user) {
+        window.location.href = "customer-login.html";
+        return;
+    }
+
+    const product =
+        wishlistItems.find(
+            item => String(item.product.id) === String(productId)
+        ).product;
+
+    if (Number(product.stock) <= 0) {
+        alert("Out of stock!");
+        return;
+    }
+
+    const { data: existing } =
+        await supabaseClient
+            .from("cart_items")
+            .select("id, quantity")
+            .eq("customer_id", user.id)
+            .eq("product_id", productId)
+            .maybeSingle();
+
+    if (existing) {
+
+        if (Number(existing.quantity) >= Number(product.stock)) {
+            alert("Maximum available stock already added.");
+            return;
+        }
+
+        await supabaseClient
+            .from("cart_items")
+            .update({
+                quantity: Number(existing.quantity) + 1
+            })
+            .eq("id", existing.id);
+
+    } else {
+
+        await supabaseClient
+            .from("cart_items")
+            .insert({
+                customer_id: user.id,
+                product_id: productId,
+                quantity: 1
+            });
+    }
+
+    alert("Added to cart 🛒");
+}
+
+
+// ==============================
+
+loadWishlist();
+
+</script>
+
+</body>
+</html>
