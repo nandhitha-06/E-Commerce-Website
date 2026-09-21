@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment</title>
+
+    <title>Payment Status</title>
 
     <style>
         body {
@@ -13,278 +15,449 @@
             background: #f4f6f9;
         }
 
-        .payment-box {
-            max-width: 450px;
-            margin: 70px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 18px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        .container {
+            max-width: 1100px;
+            margin: auto;
         }
 
-        h1 {
-            text-align: center;
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
             color: #1d428a;
         }
 
-        .test {
-            text-align: center;
-            background: #fff3cd;
-            color: #856404;
-            padding: 10px;
-            border-radius: 8px;
-            margin: 20px 0;
+        .header p {
+            margin-bottom: 0;
+            color: #666;
         }
 
-        .details {
-            font-size: 17px;
-            line-height: 1.8;
-        }
-
-        .amount {
-            font-size: 28px;
-            font-weight: bold;
-            color: green;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 9px;
-            background: #2563eb;
-            color: white;
-            font-size: 17px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            opacity: 0.85;
-        }
-
-        .back {
-            margin-top: 10px;
+        .back-btn {
             background: #555;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .summary-card h2 {
+            margin: 5px 0;
+            color: #2563eb;
+            font-size: 30px;
+        }
+
+        .summary-card p {
+            margin: 0;
+            color: #666;
+        }
+
+        .payment-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            overflow-x: auto;
+        }
+
+        .payment-section h2 {
+            color: #1d428a;
+            margin-top: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background: #1d428a;
+            color: white;
+            padding: 14px;
+            text-align: left;
+        }
+
+        td {
+            padding: 14px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .paid {
+            background: #dcfce7;
+            color: #166534;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .pending {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .failed {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #777;
+        }
+
+        @media (max-width: 700px) {
+
+            .summary {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            table {
+                font-size: 13px;
+            }
         }
     </style>
 </head>
 
+
 <body>
 
-<div class="payment-box">
+    <div class="container">
 
-    <h1>💳 Payment</h1>
+        <!-- Header -->
+        <div class="header">
 
-    <div class="test">
-        🧪 TEST PAYMENT MODE
+            <div>
+                <h1>💳 Payment Status</h1>
+                <p>View customer payment details</p>
+            </div>
+
+            <button
+                class="back-btn"
+                onclick="window.location.href='seller-dashboard.html'">
+                ← Back to Dashboard
+            </button>
+
+        </div>
+
+
+        <!-- Summary -->
+        <div class="summary">
+
+            <div class="summary-card">
+
+                <p>Total Payments</p>
+
+                <h2 id="totalPayments">
+                    0
+                </h2>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <p>Successful Payments</p>
+
+                <h2 id="successfulPayments">
+                    0
+                </h2>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <p>Total Amount</p>
+
+                <h2>
+                    ₹<span id="totalAmount">0.00</span>
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <!-- Payment Table -->
+        <div class="payment-section">
+
+            <h2>📋 Payment Transactions</h2>
+
+            <div id="loading" class="loading">
+                Loading payment details...
+            </div>
+
+            <table id="paymentTable" style="display:none;">
+
+                <thead>
+
+                    <tr>
+                        <th>Payment ID</th>
+                        <th>Order ID</th>
+                        <th>Amount</th>
+                        <th>Payment Method</th>
+                        <th>Status</th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="paymentBody">
+                </tbody>
+
+            </table>
+
+            <div
+                id="noData"
+                class="no-data"
+                style="display:none;">
+
+                No payment transactions found.
+
+            </div>
+
+        </div>
+
     </div>
 
-    <div class="details">
-        <p>
-            <strong>Order ID:</strong>
-            <span id="orderId">Loading...</span>
-        </p>
-    </div>
 
-    <div class="amount">
-        ₹<span id="amount">0.00</span>
-    </div>
-
-    <button onclick="makePayment()">
-        ✅ Pay Now
-    </button>
-
-    <button
-        class="back"
-        onclick="window.location.href='customer-orders.html'">
-        ← Back to Orders
-    </button>
-
-</div>
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
 
-<script>
+        // ==========================================
+        // SUPABASE CONNECTION
+        // ==========================================
 
-const SUPABASE_URL =
-    "https://djiqsudsnlxnzxqtsbar.supabase.co";
+        const SUPABASE_URL =
+            "https://djiqsudsnlxnzxqtsbar.supabase.co";
 
-const SUPABASE_KEY =
-    "sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
+        const SUPABASE_KEY =
+            "sb_publishable_Yo9-JloHznmsQbavqb4EEw_wq3DavvS";
 
-const supabaseClient =
-    supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
-
-
-// Get order ID
-const params =
-    new URLSearchParams(window.location.search);
-
-const orderId =
-    params.get("order_id");
+        const supabaseClient =
+            supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY
+            );
 
 
-// Load order
-async function loadOrder() {
+        // ==========================================
+        // LOAD PAYMENTS
+        // ==========================================
 
-    if (!orderId) {
+        async function loadPayments() {
 
-        document.getElementById("orderId").textContent =
-            "Not found";
+            const loading =
+                document.getElementById("loading");
 
-        return;
-    }
+            const table =
+                document.getElementById("paymentTable");
 
-
-    const { data, error } =
-        await supabaseClient
-            .from("orders")
-            .select("*")
-            .eq("id", orderId)
-            .single();
+            const noData =
+                document.getElementById("noData");
 
 
-    if (error) {
-
-        console.error(error);
-
-        alert("Order loading failed");
-
-        return;
-    }
-
-
-    document.getElementById("orderId").textContent =
-        "#" + data.id;
-
-    document.getElementById("amount").textContent =
-        Number(data.total_amount).toFixed(2);
-}
+            const {
+                data,
+                error
+            } = await supabaseClient
+                .from("payments")
+                .select("*")
+                .order("created_at", {
+                    ascending: false
+                });
 
 
-// Test payment
-async function makePayment() {
+            if (error) {
 
-    if (!orderId) {
-        alert("❌ Order not found");
-        return;
-    }
+                console.error(
+                    "Payment loading error:",
+                    error
+                );
 
-    // Get order
-    const { data: order, error: orderError } =
-        await supabaseClient
-            .from("orders")
-            .select("total_amount")
-            .eq("id", orderId)
-            .single();
+                loading.style.display = "none";
 
-    if (orderError) {
-        alert("❌ Order error:\n" + orderError.message);
-        return;
-    }
+                noData.style.display = "block";
+
+                noData.innerHTML =
+                    "❌ Unable to load payment details.";
+
+                return;
+            }
 
 
-    // Get order items
-    const { data: orderItems, error: itemsError } =
-        await supabaseClient
-            .from("order_items")
-            .select("product_id, quantity")
-            .eq("order_id", orderId);
-
-    if (itemsError) {
-        alert("❌ Order items error:\n" + itemsError.message);
-        return;
-    }
+            loading.style.display = "none";
 
 
-    // Create test payment
-    const paymentId =
-        "TEST_" + Date.now();
+            // No payments
+            if (!data || data.length === 0) {
+
+                noData.style.display = "block";
+
+                return;
+            }
 
 
-    const { error: paymentError } =
-        await supabaseClient
-            .from("payments")
-            .insert({
-                order_id: orderId,
-                payment_id: paymentId,
-                amount: order.total_amount,
-                payment_method: "Test Payment",
-                payment_status: "Paid"
+            table.style.display = "table";
+
+
+            const paymentBody =
+                document.getElementById("paymentBody");
+
+
+            let totalAmount = 0;
+
+            let successfulPayments = 0;
+
+
+            paymentBody.innerHTML = "";
+
+
+            data.forEach(payment => {
+
+                const row =
+                    document.createElement("tr");
+
+
+                const status =
+                    payment.payment_status || "Pending";
+
+
+                const statusClass =
+                    status.toLowerCase() === "paid"
+                        ? "paid"
+                        : status.toLowerCase() === "failed"
+                            ? "failed"
+                            : "pending";
+
+
+                const amount =
+                    Number(payment.amount || 0);
+
+
+                totalAmount += amount;
+
+
+                if (
+                    status.toLowerCase() === "paid"
+                ) {
+
+                    successfulPayments++;
+
+                }
+
+
+                row.innerHTML = `
+
+                    <td>
+                        ${payment.payment_id || "-"}
+                    </td>
+
+                    <td>
+                        #${payment.order_id || "-"}
+                    </td>
+
+                    <td>
+                        ₹${amount.toFixed(2)}
+                    </td>
+
+                    <td>
+                        ${payment.payment_method || "-"}
+                    </td>
+
+                    <td>
+                        <span class="${statusClass}">
+                            ${status}
+                        </span>
+                    </td>
+
+                `;
+
+
+                paymentBody.appendChild(row);
+
             });
 
 
-    if (paymentError) {
-        alert(
-            "❌ Payment failed:\n" +
-            paymentError.message
-        );
-        return;
-    }
+            // Update summary
+
+            document.getElementById(
+                "totalPayments"
+            ).textContent = data.length;
 
 
-    // Reduce product stock
-    for (const item of orderItems) {
-
-        const { data: product, error: productError } =
-            await supabaseClient
-                .from("products")
-                .select("stock")
-                .eq("id", item.product_id)
-                .single();
+            document.getElementById(
+                "successfulPayments"
+            ).textContent = successfulPayments;
 
 
-        if (productError) {
-            console.error(productError);
-            continue;
+            document.getElementById(
+                "totalAmount"
+            ).textContent =
+                totalAmount.toFixed(2);
+
         }
 
 
-        const newStock =
-            Math.max(
-                0,
-                Number(product.stock) - Number(item.quantity)
-            );
+        // ==========================================
+        // START
+        // ==========================================
 
+        loadPayments();
 
-        const { error: stockError } =
-            await supabaseClient
-                .from("products")
-                .update({
-                    stock: newStock
-                })
-                .eq("id", item.product_id);
-
-
-        if (stockError) {
-            console.error(
-                "Stock update error:",
-                stockError
-            );
-        }
-    }
-
-
-    alert(
-        "✅ Test Payment Successful!\n\n" +
-        "Payment ID: " + paymentId
-    );
-
-
-    window.location.href =
-        "customer-orders.html";
-}
-
-
-loadOrder();
-
-</script>
+    </script>
 
 </body>
+
 </html>
